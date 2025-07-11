@@ -2,9 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Freestyle Portfolio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>PRISM - Freestyle Photography</title>
   <style>
+    /* Reset */
     * {
       margin: 0;
       padding: 0;
@@ -33,6 +34,10 @@
       letter-spacing: 2px;
       color: #ccc;
       text-transform: uppercase;
+      user-select: none;
+      font-weight: 300;
+      font-style: italic;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     .container {
@@ -57,10 +62,12 @@
       align-items: flex-end;
       justify-content: left;
       padding: 3rem;
+      user-select: none;
     }
 
     .image-section.active {
       opacity: 1;
+      pointer-events: auto;
     }
 
     .overlay {
@@ -70,10 +77,13 @@
       font-size: 1.5rem;
       color: #f5f5f5;
       max-width: 60%;
+      user-select: text;
+      font-weight: 400;
+      line-height: 1.4;
     }
 
     .shutter-button {
-      position: absolute;
+      position: fixed;
       bottom: 40px;
       left: 50%;
       transform: translateX(-50%);
@@ -87,17 +97,27 @@
       align-items: center;
       justify-content: center;
       transition: transform 0.2s ease;
+      z-index: 1000;
+      user-select: none;
+      box-shadow: 0 0 10px #888;
     }
 
     .shutter-button:hover {
       transform: translateX(-50%) scale(1.1);
+      box-shadow: 0 0 20px #aaa;
     }
 
     .shutter-icon {
       width: 20px;
       height: 20px;
-      background: conic-gradient(#ccc 0% 25%, transparent 25% 50%, #ccc 50% 75%, transparent 75% 100%);
+      background: conic-gradient(
+        #ccc 0% 25%,
+        transparent 25% 50%,
+        #ccc 50% 75%,
+        transparent 75% 100%
+      );
       border-radius: 50%;
+      user-select: none;
     }
   </style>
 </head>
@@ -105,7 +125,7 @@
   <header>PRISM</header>
 
   <div class="container">
-    <div class="image-section active" style="background-image: url('1752100091936.739.JPG')">
+    <div class="image-section active" style="background-image: url('images/intro.jpg')">
       <div class="overlay">Welcome to my world of photography.</div>
     </div>
     <div class="image-section" style="background-image: url('images/about.jpg')">
@@ -124,7 +144,7 @@
       <div class="overlay">Let’s connect. Let’s create.</div>
     </div>
 
-    <div class="shutter-button" onclick="nextImage()">
+    <div class="shutter-button" onclick="nextImage()" aria-label="Next image">
       <div class="shutter-icon"></div>
     </div>
   </div>
@@ -138,6 +158,13 @@
       currentIndex = (currentIndex + 1) % sections.length;
       sections[currentIndex].classList.add('active');
     }
+
+    // Optional: let user use arrow keys too
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+        nextImage();
+      }
+    });
   </script>
 </body>
 </html>
