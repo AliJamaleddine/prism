@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PRISM</title>
+  <style>
+    html, body { margin:0; padding:0; height:100%; width:100vw; background:#000; }
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #000;
+      color: #fff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    header {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      background: #000;
+      z-index: 1000;
+      font-size: 1.2rem;
+      letter-spacing: 2px;
+      color: #ccc;
+      text-transform: uppercase;
+      pointer-events: none;
+      user-select: none;
+      text-align: center;
+      height: 62px;
+      line-height: 62px;
+      border-bottom: 1px solid #181818;
+      font-weight: 600;
+    }
+    .footer {
+      position: fixed;
+      left: 0; right: 0; bottom: 0;
+      height: 52px;
+      z-index: 1000;
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      pointer-events: auto;
+      border-top: 1px solid #181818;
+      padding: 0 28px;
+      opacity: 1;
+    }
+    .footer .social {
+      display: flex;
+      gap: 16px;
+      font-size: 1.47rem;
+      opacity: 0.84;
+      pointer-events: auto;
+    }
+    .footer a {
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      height: 32px;
+      width: 32px;
+      opacity: 0.82;
+      transition: opacity .16s;
+    }
+    .footer a:hover { opacity: 1; }
+    .footer svg {
+      height: 22px;
+      width: 22px;
+      fill: #fff;
+      display: block;
+      margin: auto;
+    }
+    .container {
+      width: 100vw; height: 100vh;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+      transition: opacity .45s;
+    }
+    .image-section {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      transition: opacity 0.7s;
+      opacity: 0;
+    }
+    .image-section.active { opacity: 1; }
+    .overlay {
+      position: absolute;
+      left: 2.5rem;
+      bottom: 2.5rem;
+      background: rgba(0,0,0,0.44);
+      padding: 1rem 2rem;
+      border-radius: 10px;
+      font-size: 1.3rem;
+      max-width: 60%;
+      color: #fff;
+      z-index: 2;
+    }
+    .video-bg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      z-index: 0;
+    }
+    .video-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center;
+      display: block;
+      background: #000;
+    }
+    .shutter-button {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      border: 2px solid #555;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .shutter-icon {
+      width: 18px;
+      height: 18px;
+      background: conic-gradient(#aaa 0% 25%, transparent 25% 50%, #aaa 50% 75%, transparent 75% 100%);
+      border-radius: 50%;
+    }
+    .blackout {
+      pointer-events: none;
+      background: #000;
+      opacity: 0;
+      transition: opacity 0.45s;
+      position: fixed;
+      left: 0; top: 0; width: 100vw; height: 100vh;
+      z-index: 2000;
+    }
+    .blackout.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .enter-gallery-btn {
+      position: fixed;
+      left: 50%; top: 50%;
+      transform: translate(-50%,-50%);
+      background: #111;
+      color: #fff;
+      border: 2px solid #fff8;
+      border-radius: 40px;
+      font-size: 1.4rem;
+      padding: 1rem 3.2rem;
+      cursor: pointer;
+      z-index: 3000;
+      opacity: 0;
+      transition: opacity .4s;
+      box-shadow: 0 4px 40px #000c;
+      font-family: inherit;
+    }
+    .enter-gallery-btn.visible { opacity: 1; pointer-events: all; }
+
+    /* GALLERY 2x2 FULLSCREEN, TIGHT, ROUNDED */
+    .gallery-center-area {
+      position: fixed;
+      left: 0; right: 0;
+      top: 62px;
+      bottom: 52px;
+      z-index: 201;
+      display: none;
+      align-items: stretch;
+      justify-content: center;
+      height: auto;
+      pointer-events: none;
+      background: none;
+    }
+    .gallery-2x2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      width: 100vw;
+      height: 100%;
+      pointer-events: auto;
+      align-items: stretch;
+      justify-items: stretch;
+      margin: 0;
+      background: none;
+    }
+    .gallery-img-wrap {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      background: #171717;
+      overflow: hidden;
+      cursor: pointer;
+      border-radius: 34px;
+      border: 2.5px solid #232323;
+      box-sizing: border-box;
+      box-shadow: 0 2px 14px #000a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform .16s, box-shadow .16s, border-color .16s;
+    }
+    .gallery-img-wrap:hover {
+      transform: scale(1.018);
+      box-shadow: 0 8px 32px #000c, 0 0 0 3px #aaa3;
+      border-color: #444;
+      z-index: 2;
+    }
+    .gallery-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 30px;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+      background: #232323;
+      transition: filter .15s;
+    }
+    .gallery-img-desc {
+      position: absolute;
+      left: 0; top: 0; right: 0; bottom: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.60);
+      color: #fff;
+      font-size: 1.35rem;
+      font-weight: 500;
+      opacity: 0;
+      pointer-events: none;
+      border-radius: 30px;
+      text-align: center;
+      padding: 2.2rem 1.6rem;
+      transition: opacity .17s;
+      z-index: 3;
+    }
+    .gallery-img-wrap:hover .gallery-img-desc {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .gallery-img-caption {
+      position: absolute;
+      right: 20px; bottom: 14px;
+      font-size: 1.13rem;
+      background: rgba(0,0,0,0.38);
+      color: #fff;
+      padding: .22rem .85rem;
+      border-radius: 10px;
+      pointer-events: none;
+      z-index: 4;
+      font-weight: 600;
+      letter-spacing: 1.2px;
+      box-shadow: 0 1px 6px #0009;
+    }
+    /* About section */
+    .about-section {
+      position: fixed;
+      left: 0; top: 0;
+      width: 100vw; height: 100vh;
+      z-index: 300;
+      background: rgba(0,0,0,0.98);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .22s;
+    }
+    .about-section.visible {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .about-img {
+      width: 55vw;
+      max-width: 680px;
+      max-height: 48vh;
+      border-radius: 22px;
+      box-shadow: 0 5px 50px #000c;
+      object-fit: cover;
+      background: #232323;
+      margin-bottom: 36px;
+      border: 3px solid #fff2;
+    }
+    .about-title {
+      color: #fff;
+      font-size: 2.2rem;
+      font-weight: bold;
+      margin-bottom: 12px;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 12px #000b;
+    }
+    .about-desc {
+      color: #fff;
+      font-size: 1.13rem;
+      max-width: 540px;
+      text-align: center;
+      margin-bottom: 38px;
+      line-height: 1.7;
+      letter-spacing: .1px;
+      background: rgba(0,0,0,.44);
+      padding: 1.3rem 2rem;
+      border-radius: 14px;
+      box-shadow: 0 2px 16px #0009;
+    }
+    .about-close {
+      font-size: 2.1rem;
+      color: #fff;
+      background: none;
+      border: none;
+      margin-top: 12px;
+      cursor: pointer;
+      opacity: 0.82;
+      transition: opacity .14s;
+    }
+    .about-close:hover { opacity: 1; }
+    @media (max-width: 900px) {
+      .gallery-center-area { top: 62px; bottom: 52px; }
+      .gallery-2x2 { gap: 4px;}
+      .about-img { width: 97vw; max-width: 97vw; }
+      .about-desc { font-size: 1.01rem; }
+      .gallery-img-wrap { border-radius:18px; }
+      .gallery-img { border-radius:16px; }
+      .gallery-img-desc { border-radius:16px; }
+    }
+    @media (max-width: 700px) {
+      .gallery-center-area { top: 75px; transform: none; }
+      .gallery-2x2 { grid-template-columns: 1fr; grid-template-rows: repeat(4,1fr); width: 100vw; }
+      .gallery-img-wrap { min-height: 120px;}
+      .about-img { max-height: 33vh;}
+      .about-title { font-size:1.25rem;}
+    }
+  </style>
+</head>
+<body>
+  <header>PRISM</header>
+  <div class="container">
+    <!-- First image -->
+    <div class="image-section active" style="background-image: url('1752100091936.739.JPG')">
+      <div class="overlay">Welcome to my world of photography.</div>
+    </div>
+    <!-- Second: Video instead of static background -->
+    <div class="image-section" id="videoSection">
+      <div class="overlay">Wandering the world, capturing fleeting beauty..</div>
+    </div>
+    <div class="image-section" style="background-image: url('000073510009.jpg')">
+      <div class="overlay">I shoot by instinct. Emotion is my lens.</div>
+    </div>
+    <div class="image-section" style="background-image: url('000048220014.jpg')">
+      <div class="overlay">Faces tell stories words cannot.</div>
+    </div>
+    <div class="image-section" style="background-image: url('000061030033.jpg')">
+      <div class="overlay">Culture on a plate, light in a frame.</div>
+    </div>
+    <div class="image-section" style="background-image: url('000048220036.jpg')">
+      <div class="overlay">Night falls, stories awaken.</div>
+    </div>
+    <div class="shutter-button" onclick="nextImage()">
+      <div class="shutter-icon"></div>
+    </div>
+  </div>
+  <div id="blackout" class="blackout"></div>
+  <button id="enterGalleryBtn" class="enter-gallery-btn">See Gallery</button>
+
+  <!-- GALLERY PAGE 2x2 GRID FULLSCREEN, TIGHT, ROUNDED -->
+  <div class="gallery-center-area" id="galleryCenterArea">
+    <div class="gallery-2x2" id="galleryGrid"></div>
+  </div>
+
+  <!-- About section/modal -->
+  <div class="about-section" id="aboutSection">
+    <img id="aboutImg" class="about-img" src="" alt=""/>
+    <div class="about-title" id="aboutTitle"></div>
+    <div class="about-desc" id="aboutDesc"></div>
+    <button class="about-close" id="aboutClose" title="Close" aria-label="Close">&times;</button>
+  </div>
+  <footer class="footer" id="footer" style="display:none;">
+    <span class="social">
+      <a href="https://instagram.com/" target="_blank" aria-label="Instagram">
+        <svg viewBox="0 0 448 512"><path d="M224 202.66A53.34 53.34 0 1 0 277.34 256 53.38 53.38 0 0 0 224 202.66Zm124.71-41a54 54 0 0 0-30.23-30.23C300.23 123.81 278 120 224 120s-76.23 3.81-94.48 11.45a54 54 0 0 0-30.23 30.23C123.81 147.77 120 170 120 224s3.81 76.23 11.45 94.48a54 54 0 0 0 30.23 30.23C147.77 388.19 170 392 224 392s76.23-3.81 94.48-11.45a54 54 0 0 0 30.23-30.23C388.19 300.23 392 278 392 224S388.19 147.77 348.71 161.71ZM224 338a114 114 0 1 1 114-114 114.13 114.13 0 0 1-114 114Zm146.4-233.5a30.24 30.24 0 0 0-17.17-17.17C326.23 84.81 304 80 224 80s-102.23 4.81-129.23 11.33a30.24 30.24 0 0 0-17.17 17.17C84.81 121.77 80 143.77 80 224s4.81 102.23 11.33 129.23a30.24 30.24 0 0 0 17.17 17.17C121.77 427.19 143.77 432 224 432s102.23-4.81 129.23-11.33a30.24 30.24 0 0 0 17.17-17.17C427.19 326.23 432 304.23 432 224S427.19 121.77 398.8 142.2Z"/></svg>
+      </a>
+      <a href="https://twitter.com/" target="_blank" aria-label="Twitter">
+        <svg viewBox="0 0 512 512"><path d="M459.4 151.7c.32 4.54.32 9.1.32 13.66 0 138.72-105.58 298.56-298.56 298.56-59.5 0-114.68-17.22-161.14-47.1a209.63 209.63 0 0 0 24.53 1.44c49.06 0 94.14-16.62 130.14-44.84a105.74 105.74 0 0 1-98.72-73.32 133.56 133.56 0 0 0 19.94 1.68c16.2 0 31.92-2.16 46.8-6.34a105.6 105.6 0 0 1-84.63-103.66v-1.34a106.28 106.28 0 0 0 47.84 13.28 105.72 105.72 0 0 1-32.68-141.1 299.7 299.7 0 0 0 217.71 110.34 119.13 119.13 0 0 1-2.64-24.14 105.72 105.72 0 0 1 182.46-72.3 211.73 211.73 0 0 0 67-25.64 105.56 105.56 0 0 1-46.44 58.2A211.07 211.07 0 0 0 504 97.94a226.91 226.91 0 0 1-52.6 54.22z"/></svg>
+      </a>
+    </span>
+  </footer>
+  <script>
+    // Global variables
+    let currentIndex = 0;
+    const sections = document.querySelectorAll('.image-section');
+    const container = document.querySelector('.container');
+    const blackout = document.getElementById('blackout');
+    const enterGalleryBtn = document.getElementById('enterGalleryBtn');
+    const footer = document.getElementById('footer');
+    const galleryCenterArea = document.getElementById('galleryCenterArea');
+    const galleryGrid = document.getElementById('galleryGrid');
+    const aboutSection = document.getElementById('aboutSection');
+    const aboutImg = document.getElementById('aboutImg');
+    const aboutTitle = document.getElementById('aboutTitle');
+    const aboutDesc = document.getElementById('aboutDesc');
+    const aboutClose = document.getElementById('aboutClose');
+    let galleryEntered = false;
+
+    // GALLERY DATA - Combined from both versions
+    const galleryImages = [
+      {
+        src: '000061030032.jpg',
+        img: 'images/portrait.jpg',
+        title: 'Blurry memories',
+        style: 'Portraits',
+        desc: 'Emotional close-ups, powerful gazes.'
+      },
+      {
+        src: 'IMG_9768.jpg',
+        img: 'images/urban.jpg',
+        title: 'Urban intricacies ',
+        style: 'Urban',
+        desc: 'City rhythm, silent geometry.'
+      },
+      {
+        src: '000061030042 copie.jpg',
+        img: 'images/food.jpg',
+        title: 'Parallel Echoes',
+        style: 'Food',
+        desc: 'lives running close, resonating'
+      },
+      {
+        src: 'P7031107 (1).jpg',
+        img: 'images/travel.jpg',
+        title: 'Nature',
+        style: 'Travel',
+        desc: 'Moments from distant lands.'
+      }
+    ];
+
+    // Initialize video on page load with better autoplay handling
+    window.addEventListener('DOMContentLoaded', function() {
+      var videoWrap = document.createElement('div');
+      videoWrap.className = 'video-bg';
+      var video = document.createElement('video');
+      
+      // Set video properties for better autoplay compatibility
+      video.autoplay = true;
+      video.loop = true;
+      video.muted = true;
+      video.playsInline = true;
+      video.controls = false;
+      video.style.width = '100%';
+      video.style.height = '100%';
+      video.style.objectFit = 'cover';
+      
+      // Create source element
+      var source = document.createElement('source');
+      source.src = 'GX010905.mp4';
+      source.type = 'video/mp4';
+      video.appendChild(source);
+      
+      // Add event listeners for better control
+      video.addEventListener('loadeddata', function() {
+        video.play().catch(function(error) {
+          console.log('Video autoplay failed:', error);
+        });
+      });
+      
+      video.addEventListener('canplaythrough', function() {
+        video.play().catch(function(error) {
+          console.log('Video play failed:', error);
+        });
+      });
+      
+      videoWrap.appendChild(video);
+      document.getElementById('videoSection').prepend(videoWrap);
+    });
+
+    // Slideshow logic - merged functionality
+    function nextImage() {
+      sections[currentIndex].classList.remove('active');
+      currentIndex++;
+      
+      if (currentIndex >= sections.length) {
+        // End of slideshow - start blackout transition
+        container.style.opacity = '0';
+        setTimeout(() => {
+          container.style.display = 'none';
+          blackout.classList.add('visible');
+          setTimeout(() => {
+            enterGalleryBtn.classList.add('visible');
+          }, 800);
+        }, 350);
+      } else {
+        // Continue slideshow
+        sections[currentIndex].classList.add('active');
+        
+        // Enhanced video handling for the video section
+        if (sections[currentIndex].id === "videoSection") {
+          const existingVideo = sections[currentIndex].querySelector('video');
+          if (existingVideo) {
+            // Try to play existing video when section becomes active
+            existingVideo.play().catch(function(error) {
+              console.log('Video play failed on section change:', error);
+            });
+          }
+        }
+      }
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if ((e.key === 'ArrowRight' || e.key === 'ArrowDown') && container.style.display !== 'none') {
+        nextImage();
+      }
+    });
+
+    // Gallery entrance
+    enterGalleryBtn.addEventListener('click', showGridGallery);
+
+    function showGridGallery() {
+      if (galleryEntered) return;
+      galleryEntered = true;
+      
+      enterGalleryBtn.classList.remove('visible');
+      setTimeout(() => {
+        blackout.classList.remove('visible');
+        galleryCenterArea.style.display = "flex";
+        footer.style.display = "flex";
+        renderGridGallery();
+      }, 200);
+    }
+
+    // Render gallery grid
+    function renderGridGallery() {
+      galleryGrid.innerHTML = "";
+      
+      galleryImages.forEach((imgObj, index) => {
+        const wrap = document.createElement('div');
+        wrap.className = 'gallery-img-wrap';
+        wrap.innerHTML = `
+          <img class="gallery-img" src="${imgObj.src}" alt="${imgObj.title}" />
+          <div class="gallery-img-desc">${imgObj.desc}</div>
+          <div class="gallery-img-caption">${imgObj.title}</div>
+        `;
+        wrap.addEventListener('click', () => showAbout(index));
+        galleryGrid.appendChild(wrap);
+      });
+    }
+
+    // Show about modal
+    function showAbout(idx) {
+      const imgObj = galleryImages[idx];
+      aboutImg.src = imgObj.src;
+      aboutImg.alt = imgObj.title;
+      aboutTitle.textContent = imgObj.title;
+      aboutDesc.textContent = imgObj.desc;
+      aboutSection.classList.add('visible');
+    }
+
+    // Close about modal
+    aboutClose.addEventListener('click', () => {
+      aboutSection.classList.remove('visible');
+    });
+
+    aboutSection.addEventListener('click', (e) => {
+      if (e.target === aboutSection) aboutSection.classList.remove('visible');
+    });
+
+    document.addEventListener('keydown', e => {
+      if (aboutSection.classList.contains('visible') && (e.key === "Escape" || e.key === "Enter")) {
+        aboutSection.classList.remove('visible');
+      }
+    });
+
+    // Auto-start slideshow on page load with user interaction fallback
+    window.addEventListener('load', () => {
+      // Try to enable autoplay after a short delay
+      setTimeout(() => {
+        const video = document.querySelector('#videoSection video');
+        if (video) {
+          video.play().catch(() => {
+            // If autoplay fails, we'll try again when the video section becomes active
+            console.log('Initial video autoplay blocked by browser');
+          });
+        }
+      }, 500);
+      
+      let autoSlide = setInterval(() => {
+        if (currentIndex < sections.length - 1) {
+          nextImage();
+        } else {
+          clearInterval(autoSlide);
+          // Final transition will be handled by nextImage() when called
+        }
+      }, 4200);
+    });
+
+    // Add click handler to enable video playback on user interaction
+    document.addEventListener('click', function enableVideo() {
+      const video = document.querySelector('#videoSection video');
+      if (video) {
+        video.play().catch(error => {
+          console.log('Video play failed even after user interaction:', error);
+        });
+      }
+      // Remove this listener after first click
+      document.removeEventListener('click', enableVideo);
+    }, { once: true });
+  </script>
+</body>
+</html>
